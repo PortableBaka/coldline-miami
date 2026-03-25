@@ -38,10 +38,10 @@ go build -o build/coldline-miami .
 
 ## Controls
 
-| Key | Action |
-|-----|--------|
+| Key / Input | Action |
+|-------------|--------|
 | Arrow keys | Move player |
-| Space | Shoot |
+| Space | Shoot toward mouse cursor |
 
 ## Architecture
 
@@ -55,16 +55,18 @@ World
 ├── staticMovements — direction + speed for autonomous movers (bullets)
 ├── healths         — current/max HP and invincibility timer
 ├── colliders       — AABB hitbox + tag (player/enemy/wall/bullet)
-└── shooters        — fire rate cooldown
+├── shooters        — fire rate cooldown
+└── dimensions      — logical resolution (width × height) used for scaling and despawn bounds
 ```
 
 ### Systems (update order)
 
 | System | What it does |
 |--------|-------------|
+| `DespawnSystem` | Kills entities that have travelled outside the logical world bounds |
 | `MovementSystem` | Reads arrow key input, moves entities with a `Movement` component |
-| `ShootingSystem` | Spawns bullet entities on Space, respects fire rate cooldown |
-| `StaticMovementSystem` | Moves entities along a fixed direction (bullets) |
+| `ShootingSystem` | Spawns a bullet aimed at the mouse cursor on Space, respects fire rate cooldown |
+| `StaticMovementSystem` | Moves entities along a fixed normalised direction vector (bullets) |
 | `CollisionSystem` | AABB overlap checks across all collidables, dispatches to `onCollision` |
 | `HealthSystem` | Ticks down invincibility timers, kills entities at 0 HP |
 | `GameOverSystem` | Sets `endState` to Victory or Defeat when player/enemies are gone |
@@ -105,6 +107,12 @@ Debug mode is enabled by default (`world.TurnOnDebug()` in `init`). It overlays:
 
 Toggle with `world.TurnOffDebug()`.
 
+## Rendering
+
+The game renders at a fixed **logical resolution** (800×600) into a `RenderTexture2D`, then scales that texture to fill whatever the actual window size is. This means all gameplay coordinates, collision, and spawning logic works in logical pixels — the window can be resized freely without touching any game code.
+
+Mouse input is remapped to logical coordinates via `getLogicalMousePosition` in [src/core/utils.go](src/core/utils.go) so aiming stays accurate at any window size.
+
 ## Project Structure
 
 ```
@@ -118,8 +126,9 @@ coldline-miami/
         ├── components.go — component structs and tag constants
         ├── world.go      — World struct, entity factory, component helpers
         ├── systems.go    — all ECS systems
-        ├── loop.go       — game loop, init, render
-        ├── game.go       — Game struct
+        ├── loop.go       — game loop, init, render pipeline
+        ├── game.go       — Game struct (holds render texture)
         ├── entity.go     — Entity struct
-        └── settings.go   — debug/settings flags
+        ├── settings.go   — debug/settings flags
+        └── utils.go      — shared helpers (logical mouse position, etc.)
 ```

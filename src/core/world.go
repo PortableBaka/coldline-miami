@@ -4,6 +4,11 @@ import (
 	"github.com/google/uuid"
 )
 
+type WorldDimensions struct {
+	Width  float64
+	Height float64
+}
+
 type World struct {
 	entities        map[uuid.UUID]*Entity
 	transforms      map[uuid.UUID]*Transform
@@ -13,8 +18,9 @@ type World struct {
 	colliders       map[uuid.UUID]*Collider
 	shooters        map[uuid.UUID]*Shooter
 
-	endState GameEndState
-	settings *Settings
+	endState   GameEndState
+	settings   *Settings
+	dimensions *WorldDimensions
 }
 
 func NewWorld() *World {
@@ -30,6 +36,10 @@ func NewWorld() *World {
 		endState: In_Progress,
 		settings: &Settings{
 			debug: false,
+		},
+		dimensions: &WorldDimensions{
+			Width:  800,
+			Height: 600,
 		},
 	}
 }

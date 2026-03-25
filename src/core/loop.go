@@ -20,7 +20,8 @@ func (g *Game) Loop() {
 
 func (g *Game) init() {
 	rl.SetTargetFPS(60)
-	rl.InitWindow(800, 600, "Coldline Miami")
+	rl.InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Coldline Miami")
+	g.renderTarget = rl.LoadRenderTexture(WORLD_WIDTH, WORLD_HEIGHT)
 
 	g.world.TurnOnDebug()
 
@@ -40,10 +41,12 @@ func (g *Game) init() {
 }
 
 func (g *Game) deinit() {
+	rl.UnloadRenderTexture(g.renderTarget)
 	rl.CloseWindow()
 }
 
 func (g *Game) update(dt float64) {
+	DespawnSystem(g.world)
 	MovementSystem(g.world, dt)
 	ShootingSystem(g.world, dt)
 	StaticMovementSystem(g.world, dt)
@@ -53,44 +56,61 @@ func (g *Game) update(dt float64) {
 }
 
 func (g *Game) render() {
-	rl.BeginDrawing()
+	rl.BeginTextureMode(g.renderTarget)
 	rl.ClearBackground(rl.RayWhite)
 
-	if g.world.endState != In_Progress {
+	renderDebugInfo(g.world)
+	renderGameState(g.world)
+
+	rl.EndTextureMode()
+
+	screenW := float32(rl.GetScreenWidth())
+	screenH := float32(rl.GetScreenHeight())
+	src := rl.Rectangle{X: 0, Y: 0, Width: float32(g.world.dimensions.Width), Height: -float32(g.world.dimensions.Height)}
+	dst := rl.Rectangle{X: 0, Y: 0, Width: screenW, Height: screenH}
+
+	rl.BeginDrawing()
+	rl.ClearBackground(rl.Black)
+	rl.DrawTexturePro(g.renderTarget.Texture, src, dst, rl.Vector2{}, 0, rl.White)
+	rl.EndDrawing()
+}
+
+func renderDebugInfo(w *World) {
+	if w.settings.debug {
+		rl.DrawText("Debug Mode ON", 10, 10, 20, rl.Red)
+		rl.DrawText("FPS: "+strconv.Itoa(int(rl.GetFPS())), 10, 30, 20, rl.Red)
+
+		for _, entity := range w.entities {
+			transform := w.transforms[entity.ID]
+
+			if health, ok := w.healths[entity.ID]; ok {
+				rl.DrawText("HP: "+strconv.Itoa(health.Current), int32(transform.X-10), int32(transform.Y-20), 10, rl.Red)
+			}
+		}
+	}
+}
+
+func renderGameState(w *World) {
+	if w.endState != In_Progress {
 		var msg string
-		if g.world.endState == Victory {
+		if w.endState == Victory {
 			msg = "You Win!"
 		} else {
 			msg = "Game Over"
 		}
 		rl.DrawText(msg, 350, 280, 30, rl.Black)
-		rl.EndDrawing()
-		return
-	}
+	} else {
+		for _, entity := range w.entities {
+			transform := w.transforms[entity.ID]
 
-	if g.world.settings.debug {
-		rl.DrawText("Debug Mode ON", 10, 10, 20, rl.Red)
-		rl.DrawText(strconv.Itoa(int(rl.GetFPS())), 10, 20, 20, rl.Red)
-	}
-
-	for _, entity := range g.world.entities {
-		transform := g.world.transforms[entity.ID]
-
-		switch entity.name {
-		case "Player":
-			rl.DrawCircle(int32(transform.X), int32(transform.Y), 10, rl.Blue)
-		case "Enemy":
-			rl.DrawCircle(int32(transform.X), int32(transform.Y), 10, rl.Red)
-		case "Bullet":
-			rl.DrawCircle(int32(transform.X), int32(transform.Y), 5, rl.Black)
-		}
-
-		if g.world.settings.debug {
-			if health, ok := g.world.healths[entity.ID]; ok {
-				rl.DrawText("HP: "+strconv.Itoa(health.Current), int32(transform.X-10), int32(transform.Y-20), 10, rl.Red)
+			switch entity.name {
+			case "Player":
+				rl.DrawCircle(int32(transform.X), int32(transform.Y), 10, rl.Blue)
+			case "Enemy":
+				rl.DrawCircle(int32(transform.X), int32(transform.Y), 10, rl.Red)
+			case "Bullet":
+				rl.DrawCircle(int32(transform.X), int32(transform.Y), 5, rl.Black)
 			}
 		}
 	}
-
-	rl.EndDrawing()
 }

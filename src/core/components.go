@@ -23,15 +23,6 @@ type Health struct {
 	InvincibleFor float64
 }
 
-type ColliderTag string
-
-const (
-	TagPlayer ColliderTag = "player"
-	TagEnemy  ColliderTag = "enemy"
-	TagWall   ColliderTag = "wall"
-	TagBullet ColliderTag = "bullet"
-)
-
 type Collider struct {
 	Width, Height float64
 	Tag           ColliderTag
@@ -40,19 +31,3 @@ type Collider struct {
 type Shooter struct {
 	Cooldown float64
 }
-
-type GameState string
-
-const (
-	StatePlaying  GameState = "playing"
-	StatePaused   GameState = "paused"
-	StateGameOver GameState = "game_over"
-)
-
-type GameEndState string
-
-const (
-	Victory     GameEndState = "victory"
-	Defeat      GameEndState = "defeat"
-	In_Progress GameEndState = "in_progress"
-)

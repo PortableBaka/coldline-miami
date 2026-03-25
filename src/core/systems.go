@@ -1,6 +1,8 @@
 package core
 
 import (
+	"math"
+
 	rl "github.com/gen2brain/raylib-go/raylib"
 	"github.com/google/uuid"
 )
@@ -60,13 +62,23 @@ func ShootingSystem(w *World, dt float64) {
 		}
 
 		if rl.IsKeyDown(rl.KeySpace) {
-			bullet := w.NewEntity("Bullet")
 			playerTransform, ok := w.transforms[id]
 			if !ok {
 				continue
 			}
+
+			mouse := getLogicalMousePosition(*w.dimensions)
+			dirX := float64(mouse.X) - playerTransform.X
+			dirY := float64(mouse.Y) - playerTransform.Y
+			length := math.Sqrt(dirX*dirX + dirY*dirY)
+			if length > 0 {
+				dirX /= length
+				dirY /= length
+			}
+
+			bullet := w.NewEntity("Bullet")
 			w.AddTransform(bullet, playerTransform.X, playerTransform.Y)
-			w.AddStaticMovement(bullet, 0, -1, 400)
+			w.AddStaticMovement(bullet, dirX, dirY, 400)
 			w.AddCollider(bullet, 5, 5, TagBullet)
 			shooter.Cooldown = 0.5
 		}
@@ -154,11 +166,24 @@ func onCollision(w *World, aID, bID uuid.UUID) {
 		}
 		if health, ok := w.healths[playerID]; ok && health.InvincibleFor <= 0 {
 			health.Current--
-			health.InvincibleFor = 1.0 // 1 second cooldown
+			health.InvincibleFor = PLAYER_INVICIBLE_AFTER_HIT_TIME // 1 second cooldown
 		}
 
 	case [2]ColliderTag{TagPlayer, TagWall}, [2]ColliderTag{TagWall, TagPlayer},
 		[2]ColliderTag{TagEnemy, TagWall}, [2]ColliderTag{TagWall, TagEnemy}:
 		// wall blocking — movement resolution not yet implemented
+	}
+}
+
+func DespawnSystem(w *World) {
+	for id := range w.entities {
+		transform, ok := w.transforms[id]
+		if !ok {
+			continue
+		}
+
+		if transform.X < -DESPAWN_OFFSET || transform.X > w.dimensions.Width+DESPAWN_OFFSET || transform.Y < -DESPAWN_OFFSET || transform.Y > w.dimensions.Height+DESPAWN_OFFSET {
+			w.KillEntity(id)
+		}
 	}
 }
