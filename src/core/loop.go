@@ -1,6 +1,8 @@
 package core
 
 import (
+	cfg "coldline-miami/src/config"
+	"log"
 	"strconv"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
@@ -19,9 +21,15 @@ func (g *Game) Loop() {
 }
 
 func (g *Game) init() {
+	config, err := cfg.LoadConfig()
+	if err != nil {
+		log.Printf("failed to load config: %v, using defaults", err)
+		config = cfg.DefaultConfig()
+	}
+
 	rl.SetTargetFPS(60)
-	rl.InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Coldline Miami")
-	g.renderTarget = rl.LoadRenderTexture(WORLD_WIDTH, WORLD_HEIGHT)
+	rl.InitWindow(config.ScreenWidth, config.ScreenHeight, config.Title)
+	g.renderTarget = rl.LoadRenderTexture(config.LogicalWidth, config.LogicalHeight)
 
 	g.world.TurnOnDebug()
 
