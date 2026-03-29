@@ -31,3 +31,7 @@ type Collider struct {
 type Shooter struct {
 	Cooldown float64
 }
+
+type EnemyShooter struct {
+	Cooldown float64
+}

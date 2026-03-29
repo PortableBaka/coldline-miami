@@ -41,12 +41,13 @@ func (g *Game) init() {
 		g.world.TurnOnDebug()
 	}
 
-	player := g.world.NewEntity("Player")
-	enemy := g.world.NewEntity("Enemy")
+	player := g.world.NewEntity("Player", TypePlayer)
+	enemy := g.world.NewEntity("Enemy", TypeEnemy)
 
 	g.world.AddTransform(enemy, 500, 300)
 	g.world.AddHealth(enemy, 5, 5)
 	g.world.AddCollider(enemy, 20, 20, TagEnemy)
+	g.world.AddEnemyShooter(enemy, 1.0)
 
 	g.world.AddTransform(player, 300, 300)
 	g.world.AddMovement(player, 100)
@@ -65,6 +66,7 @@ func (g *Game) update(dt float64) {
 	DespawnSystem(g.world)
 	MovementSystem(g.world, dt)
 	ShootingSystem(g.world, dt)
+	EnemyShootingSystem(g.world, dt)
 	StaticMovementSystem(g.world, dt)
 	CollisionSystem(g.world)
 	HealthSystem(g.world, dt)

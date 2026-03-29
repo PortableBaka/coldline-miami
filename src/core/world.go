@@ -17,6 +17,7 @@ type World struct {
 	healths         map[uuid.UUID]*Health
 	colliders       map[uuid.UUID]*Collider
 	shooters        map[uuid.UUID]*Shooter
+	enemyShooters   map[uuid.UUID]*EnemyShooter
 
 	endState   GameEndState
 	settings   *Settings
@@ -32,6 +33,7 @@ func NewWorld() *World {
 		healths:         make(map[uuid.UUID]*Health),
 		colliders:       make(map[uuid.UUID]*Collider),
 		shooters:        make(map[uuid.UUID]*Shooter),
+		enemyShooters:   make(map[uuid.UUID]*EnemyShooter),
 
 		endState: In_Progress,
 		settings: &Settings{
@@ -41,12 +43,13 @@ func NewWorld() *World {
 	}
 }
 
-func (w *World) NewEntity(name string) *Entity {
+func (w *World) NewEntity(name string, entityType EntityType) *Entity {
 	id := uuid.New()
 
 	entity := Entity{
-		ID:   id,
-		name: name,
+		ID:         id,
+		name:       name,
+		entityType: entityType,
 	}
 
 	w.entities[id] = &entity
@@ -96,6 +99,12 @@ func (w *World) AddShooter(entity *Entity, cooldown float64) {
 	}
 }
 
+func (w *World) AddEnemyShooter(entity *Entity, cooldown float64) {
+	w.enemyShooters[entity.ID] = &EnemyShooter{
+		Cooldown: cooldown,
+	}
+}
+
 func (w *World) KillEntity(id uuid.UUID) (*Entity, bool) {
 	entity, exists := w.entities[id]
 
@@ -110,6 +119,7 @@ func (w *World) KillEntity(id uuid.UUID) (*Entity, bool) {
 	delete(w.healths, id)
 	delete(w.colliders, id)
 	delete(w.shooters, id)
+	delete(w.enemyShooters, id)
 	return entity, true
 }
 

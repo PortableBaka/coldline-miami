@@ -35,3 +35,12 @@ const (
 	TagWall   ColliderTag = "wall"
 	TagBullet ColliderTag = "bullet"
 )
+
+type EntityType string
+
+const (
+	TypePlayer EntityType = "player"
+	TypeEnemy  EntityType = "enemy"
+	TypeWall   EntityType = "wall"
+	TypeBullet EntityType = "bullet"
+)

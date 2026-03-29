@@ -76,7 +76,7 @@ func ShootingSystem(w *World, dt float64) {
 				dirY /= length
 			}
 
-			bullet := w.NewEntity("Bullet")
+			bullet := w.NewEntity("Bullet", TypeBullet)
 			w.AddTransform(bullet, playerTransform.X, playerTransform.Y)
 			w.AddStaticMovement(bullet, dirX, dirY, 400)
 			w.AddCollider(bullet, 5, 5, TagBullet)
@@ -169,6 +169,18 @@ func onCollision(w *World, aID, bID uuid.UUID) {
 			health.InvincibleFor = PLAYER_INVICIBLE_AFTER_HIT_TIME // 1 second cooldown
 		}
 
+	case [2]ColliderTag{TagBullet, TagPlayer}, [2]ColliderTag{TagPlayer, TagBullet}:
+		playerID, bulletID := bID, aID
+		if aCol.Tag == TagPlayer {
+			playerID, bulletID = aID, bID
+		}
+		if health, ok := w.healths[playerID]; ok && health.InvincibleFor <= 0 {
+			health.Current--
+			health.InvincibleFor = PLAYER_INVICIBLE_AFTER_HIT_TIME // 1 second cooldown
+		}
+
+		w.KillEntity(bulletID)
+
 	case [2]ColliderTag{TagPlayer, TagWall}, [2]ColliderTag{TagWall, TagPlayer},
 		[2]ColliderTag{TagEnemy, TagWall}, [2]ColliderTag{TagWall, TagEnemy}:
 		// wall blocking — movement resolution not yet implemented
@@ -186,4 +198,56 @@ func DespawnSystem(w *World) {
 			w.KillEntity(id)
 		}
 	}
+}
+
+func EnemyShootingSystem(w *World, dt float64) {
+	var playerX, playerY float64
+	playerFound := false
+	for id, entity := range w.entities {
+		if entity.entityType == TypePlayer {
+			if t, ok := w.transforms[id]; ok {
+				playerX, playerY = t.X, t.Y
+				playerFound = true
+			}
+			break
+		}
+	}
+	if !playerFound {
+		return
+	}
+
+	for id, entity := range w.entities {
+		if entity.entityType != TypeEnemy {
+			continue
+		}
+		shooter, ok := w.enemyShooters[id]
+		if !ok {
+			continue
+		}
+		if shooter.Cooldown > 0 {
+			shooter.Cooldown -= dt
+			continue
+		}
+		enemyTransform, ok := w.transforms[id]
+		if !ok {
+			continue
+		}
+		dirX := playerX - enemyTransform.X
+		dirY := playerY - enemyTransform.Y
+		length := math.Sqrt(dirX*dirX + dirY*dirY)
+		if length > 0 {
+			dirX /= length
+			dirY /= length
+		}
+		bullet := w.NewEntity("EnemyBullet", TypeBullet)
+		spawnOffset := 15.0
+		w.AddTransform(bullet, enemyTransform.X+dirX*spawnOffset, enemyTransform.Y+dirY*spawnOffset)
+		w.AddStaticMovement(bullet, dirX, dirY, 300)
+		w.AddCollider(bullet, 5, 5, TagBullet)
+		shooter.Cooldown = 1.0
+	}
+}
+
+func EnemyMovementSystem(w *World, dt float64) {
+
 }
