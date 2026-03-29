@@ -37,10 +37,7 @@ func NewWorld() *World {
 		settings: &Settings{
 			debug: false,
 		},
-		dimensions: &WorldDimensions{
-			Width:  800,
-			Height: 600,
-		},
+		dimensions: &WorldDimensions{},
 	}
 }
 

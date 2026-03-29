@@ -4,5 +4,6 @@
     "logicalWidth": 1280,
     "logicalHeight": 720,
     "title": "Coldline Miami",
-    "fpsLimit": 60
+    "fpsLimit": 60,
+    "debug": true
 }

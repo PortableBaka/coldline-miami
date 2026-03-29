@@ -12,8 +12,9 @@ type Config struct {
 	ScreenHeight  int32  `json:"screenHeight"`
 	LogicalWidth  int32  `json:"logicalWidth"`
 	LogicalHeight int32  `json:"logicalHeight"`
-	FPSLimit      int    `json:"fpsLimit"`
+	FPSLimit      int32  `json:"fpsLimit"`
 	Title         string `json:"title"`
+	Debug         bool   `json:"debug"`
 }
 
 func LoadConfig() (*Config, error) {
@@ -22,7 +23,7 @@ func LoadConfig() (*Config, error) {
 		return nil, fmt.Errorf("failed to resolve executable path: %w", err)
 	}
 
-	filePath := filepath.Join(filepath.Dir(exe), "config.json")
+	filePath := filepath.Join(filepath.Dir(exe), "..", "config.json")
 
 	jsonData, err := os.ReadFile(filePath)
 	if err != nil {
@@ -45,5 +46,6 @@ func DefaultConfig() *Config {
 		LogicalHeight: 720,
 		FPSLimit:      60,
 		Title:         "Coldline Miami",
+		Debug:         false,
 	}
 }

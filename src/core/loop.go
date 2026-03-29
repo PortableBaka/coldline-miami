@@ -2,6 +2,7 @@ package core
 
 import (
 	cfg "coldline-miami/src/config"
+	"fmt"
 	"log"
 	"strconv"
 
@@ -27,11 +28,18 @@ func (g *Game) init() {
 		config = cfg.DefaultConfig()
 	}
 
-	rl.SetTargetFPS(60)
+	g.world.dimensions.Width = float64(config.LogicalWidth)
+	g.world.dimensions.Height = float64(config.LogicalHeight)
+
+	rl.SetTargetFPS(config.FPSLimit)
 	rl.InitWindow(config.ScreenWidth, config.ScreenHeight, config.Title)
 	g.renderTarget = rl.LoadRenderTexture(config.LogicalWidth, config.LogicalHeight)
 
-	g.world.TurnOnDebug()
+	fmt.Println(config)
+
+	if config.Debug {
+		g.world.TurnOnDebug()
+	}
 
 	player := g.world.NewEntity("Player")
 	enemy := g.world.NewEntity("Enemy")
@@ -74,8 +82,16 @@ func (g *Game) render() {
 
 	screenW := float32(rl.GetScreenWidth())
 	screenH := float32(rl.GetScreenHeight())
-	src := rl.Rectangle{X: 0, Y: 0, Width: float32(g.world.dimensions.Width), Height: -float32(g.world.dimensions.Height)}
-	dst := rl.Rectangle{X: 0, Y: 0, Width: screenW, Height: screenH}
+	logW := float32(g.renderTarget.Texture.Width)
+	logH := float32(g.renderTarget.Texture.Height)
+	scale := min(screenW/logW, screenH/logH)
+	src := rl.Rectangle{X: 0, Y: 0, Width: logW, Height: -logH}
+	dst := rl.Rectangle{
+		X:      (screenW - logW*scale) / 2,
+		Y:      (screenH - logH*scale) / 2,
+		Width:  logW * scale,
+		Height: logH * scale,
+	}
 
 	rl.BeginDrawing()
 	rl.ClearBackground(rl.Black)
